@@ -10,9 +10,12 @@ const pool = new Pool({
 export async function db(query, params = []) {
   const client = await pool.connect();
   try {
-    const result = await client.query(query, params);
-    return { rows: result.rows };
+    const res = await client.query(query, params);
+    return { rows: res.rows };
   } finally {
     client.release();
   }
 }
+
+// export pool for transactions when needed
+export { pool };
