@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Investment Platform — Netlify + Neon</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f8fb; --card:#fff; --accent:#0b74de; --accent2:#06b6d4;
+  --muted:#6b7280; --danger:#ef4444; --success:#16a34a; 
+  --radius:12px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; font-family:Inter,system-ui,Arial;
+  background:linear-gradient(180deg,#f2f6fc,#ffffff);
+  color:#0f172a;
+}
+.container{max-width:1100px;margin:20px auto;padding:18px;}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;}
+.card{
+  background:var(--card);border-radius:var(--radius);
+  padding:16px;box-shadow:0 8px 25px rgba(0,0,0,0.07);
+  margin-bottom:14px;
+}
+.grid{display:grid;grid-template-columns:1fr 350px;gap:18px;margin-top:18px;}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+input,select,textarea{
+  width:100%;padding:10px;font-family:inherit;border:1px solid #e5eaf1;
+  border-radius:8px;background:#fff;
+}
+button{cursor:pointer;font-family:inherit;}
+.btn{
+  background:var(--accent);color:#fff;border:none;padding:10px 14px;
+  border-radius:10px;font-weight:600;
+}
+.btn-ghost{
+  background:transparent;border:1px solid #d8e1ef;color:var(--accent);
+  padding:8px 12px;border-radius:10px;font-weight:600;
+}
+.row{display:flex;gap:8px;}
+.col{flex:1;}
+.small{font-size:14px;font-weight:600;}
+.tiny{font-size:12px;color:var(--muted);}
+.request{
+  border:1px solid #e8eef9;padding:12px;border-radius:12px;
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;
+}
+.tag{padding:6px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+.tag-pending{background:#fff7ed;color:#92400e;}
+.tag-paid{background:#ecfdf5;color:#166534;}
+.tag-rejected{background:#fff1f2;color:#7f1d1d;}
+
+.table{width:100%;border-collapse:collapse;}
+.table th,.table td{padding:10px;text-align:left;border-bottom:1px solid #eef2f7;}
+.actions{display:flex;gap:6px;}
+
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;
+  align-items:center;justify-content:center;z-index:9999;
+}
+.modal{background:#fff;padding:18px;border-radius:14px;width:100%;max-width:480px;
+box-shadow:0 20px 60px rgba(0,0,0,0.3);}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<header class="header">
+  <div class="brand">
+    <div class="logo">IP</div>
+    <div>
+      <div style="font-weight:700;font-size:18px;">Investment Platform</div>
+      <div class="tiny">Netlify Functions + Neon</div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div id="topUser" class="tiny muted">Signed out</div>
+    <div id="topActions"></div>
+  </div>
+</header>
+
+<!-- MAIN GRID -->
+<main class="grid">
+
+  <!-- LEFT SECTION -->
+  <section>
+
+    <!-- AUTH CARD -->
+    <div id="authCard" class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <strong>Sign up / Login</strong>
+          <div class="tiny muted">Create account to start using</div>
+        </div>
+      </div>
+
+      <div id="authForms" style="margin-top:12px;">
+        <!-- SIGNUP -->
+        <div id="signup">
+          <div class="row"><div class="col"><input id="su_name" placeholder="Name"></div></div>
+          <div class="row" style="margin-top:8px;">
+            <div class="col"><input id="su_email" placeholder="Email"></div>
+            <div class="col"><input id="su_pass" type="password" placeholder="Password"></div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn" onclick="signup()">Sign up</button>
+            <button class="btn-ghost" onclick="toggleLogin()">Login</button>
+          </div>
+        </div>
+
+        <!-- LOGIN -->
+        <div id="login" style="display:none;">
+          <div class="row">
+            <div class="col"><input id="li_email" placeholder="Email"></div>
+            <div class="col"><input id="li_pass" type="password" placeholder="Password"></div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn" onclick="login()">Login</button>
+            <button class="btn-ghost" onclick="toggleSignup()">Sign up</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="card" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <strong>Dashboard</strong>
+          <div id="meEmail" class="tiny muted"></div>
+        </div>
+        <div style="text-align:right;">
+          <div class="tiny muted">Balance</div>
+          <div id="meBalance" style="font-size:22px;font-weight:700;">0 BDT</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px;">
+        <div class="col">
+          <div class="small">Withdraw</div>
+          <div class="tiny muted">Enter amount & method</div>
+
+          <div style="margin-top:8px;">
+            <input id="wd_amount" type="number" placeholder="Amount (BDT)" />
+            <div class="row" style="margin-top:8px;">
+              <div class="col">
+                <select id="wd_method">
+                  <option value="bkash">bKash</option>
+                  <option value="nagad">Nagad</option>
+                  <option value="rocket">Rocket</option>
+                </select>
+              </div>
+              <div class="col"><input id="wd_number" placeholder="Number"></div>
+            </div>
+            <textarea id="wd_note" rows="2" placeholder="Note (optional)" style="margin-top:8px;"></textarea>
+            <div class="row" style="margin-top:12px;">
+              <button class="btn" onclick="submitWithdraw()">Submit</button>
+              <button class="btn-ghost" onclick="demoAddBalance()">Demo Add</button>
+            </div>
+            <div id="wd_msg" class="tiny" style="margin-top:6px;color:var(--danger);"></div>
+          </div>
+        </div>
+
+        <aside style="width:300px;">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="small">My Withdraws</div>
+              <button class="tiny btn-ghost" onclick="renderMyWithdraws()">Refresh</button>
+            </div>
+            <div id="myWithdraws" style="margin-top:10px;"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- RIGHT ADMIN PANEL -->
+  <aside>
+    <div class="card">
+      <strong>Admin Panel</strong>
+      <div class="tiny muted" style="margin-top:6px;">Enter ADMIN KEY</div>
+
+      <input id="admin_key_input" placeholder="ADMIN KEY" style="margin-top:10px;">
+      <div class="row" style="margin-top:10px;">
+        <button class="btn" onclick="adminAuth()">Set</button>
+        <button class="btn-ghost" onclick="adminClear()">Clear</button>
+      </div>
+
+      <div id="adminArea" style="margin-top:14px;display:none;">
+
+        <div style="display:flex;justify-content:space-between;">
+          <div class="small">Withdraw Requests</div>
+          <button class="tiny btn-ghost" onclick="loadAdminData()">Refresh</button>
+        </div>
+        <div id="adminWithdraws" style="margin-top:10px;"></div>
+
+        <hr style="margin:15px 0;color:#e8e8e8;">
+
+        <div style="display:flex;justify-content:space-between;">
+          <div class="small">Users</div>
+          <input id="userSearch" placeholder="Search" oninput="renderUsers()" style="width:60%;">
+        </div>
+        <div id="adminUsers" style="margin-top:10px;max-height:300px;overflow:auto;"></div>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<footer class="tiny muted" style="text-align:center;margin-top:20px;">© Demo — Secure before production</footer>
+</div>
+
+<!-- MODAL -->
+<div id="modalBackdrop" class="modal-backdrop">
+  <div id="modalContent" class="modal"></div>
+</div>
+
+<!-- JS Logic -->
+<script>
+const API = "/.netlify/functions";
+
+/* ---------------- AUTH ---------------- */
+function toggleLogin(){
+  document.getElementById("signup").style.display="none";
+  document.getElementById("login").style.display="block";
+}
+function toggleSignup(){
+  document.getElementById("signup").style.display="block";
+  document.getElementById("login").style.display="none";
+}
+
+function setToken(t){ localStorage.setItem("jwt", t); }
+function getToken(){ return localStorage.getItem("jwt"); }
+function logout(){ localStorage.removeItem("jwt"); location.reload(); }
+
+/* SIGNUP */
+async function signup(){
+  const name=su_name.value.trim(), email=su_email.value.trim(), pass=su_pass.value;
+
+  if(!name || !email || !pass) return alert("Fill all fields");
+
+  const res = await fetch(API+"/public-register",{
+    method:"POST", headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ name,email,password:pass })
+  });
+
+  const j = await res.json();
+  if(!res.ok) return alert(j.message);
+
+  alert("Registered! Please login");
+  toggleLogin();
+}
+
+/* LOGIN */
+async function login(){
+  const email=li_email.value.trim(), pass=li_pass.value;
+
+  const res = await fetch(API+"/public-login",{
+    method:"POST", headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ email,password:pass })
+  });
+
+  const j = await res.json();
+  if(!res.ok) return alert(j.message);
+
+  setToken(j.token);
+  loadMe();
+  alert("Logged in");
+}
+
+/* LOAD PROFILE */
+async function loadMe(){
+  const token = getToken();
+  if(!token) return;
+
+  const res = await fetch(API+"/get-my-profile",{
+    headers:{ Authorization:"Bearer "+token }
+  });
+
+  if(!res.ok){
+    logout();
+    return;
+  }
+
+  const me = await res.json();
+
+  authCard.style.display="none";
+  dashboard.style.display="block";
+  topUser.textContent = me.email;
+  topActions.innerHTML = `<button class="btn-ghost" onclick="logout()">Logout</button>`;
+  meEmail.textContent = me.email;
+  meBalance.textContent = Number(me.balance).toFixed(2)+" BDT";
+
+  renderMyWithdraws();
+}
+
+if(getToken()) loadMe();
+
+/* ---------------- WITHDRAW ---------------- */
+async function submitWithdraw(){
+  const amount = Number(wd_amount.value);
+  const method = wd_method.value;
+  const number = wd_number.value;
+  const note = wd_note.value;
+
+  const res = await fetch(API+"/create-withdraw-public",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json", Authorization:"Bearer "+getToken() },
+    body:JSON.stringify({ amount,method,number,note })
+  });
+
+  const j = await res.json();
+  if(!res.ok) { wd_msg.textContent=j.message; return; }
+
+  wd_msg.style.color="green";
+  wd_msg.textContent="Withdraw submitted!";
+  renderMyWithdraws();
+}
+
+async function renderMyWithdraws(){
+  const res = await fetch(API+"/get-my-withdraws",{ headers:{ Authorization:"Bearer "+getToken() }});
+  const arr = await res.json();
+
+  myWithdraws.innerHTML = "";
+
+  arr.forEach(w=>{
+    myWithdraws.innerHTML += `
+      <div class="request">
+        <div>
+          <strong>${w.amount} BDT</strong><br>
+          <span class="tiny">${w.method} • ${w.number}</span><br>
+          <span class="tiny"> ${new Date(w.requested_at).toLocaleString()} </span>
+        </div>
+        <div class="tag tag-${w.status}">${w.status.toUpperCase()}</div>
+      </div>`;
+  });
+}
+
+/* ---------------- ADMIN ---------------- */
+
+let ADMIN_KEY = "";
+
+function adminAuth(){
+  ADMIN_KEY = admin_key_input.value.trim();
+  if(!ADMIN_KEY) return alert("Enter admin key");
+  adminArea.style.display="block";
+  loadAdminData();
+}
+
+function adminClear(){ ADMIN_KEY=""; adminArea.style.display="none"; }
+
+/* GET WITHDRAWS + USERS */
+async function loadAdminData(){
+  const head = { "x-admin-key": ADMIN_KEY };
+
+  // withdraws
+  let wdRes = await fetch(API+"/get-withdraws-admin",{ headers:head });
+  let wd = await wdRes.json();
+
+  adminWithdraws.innerHTML = wd.map(w=>`
+    <div class="request">
+      <div>
+        <strong>${w.amount} BDT</strong>
+        <div class="tiny">${w.user_email}</div>
+        <div class="tiny">${new Date(w.requested_at).toLocaleString()}</div>
+      </div>
+      <div>
+        <span class="tag tag-${w.status}">${w.status.toUpperCase()}</span>
+        ${w.status=="pending" ? `
+          <button class="btn tiny" onclick="approve('${w.id}')">Approve</button>
+          <button class="btn-ghost tiny" onclick="rejectReq('${w.id}')">Reject</button>
+        ` : ``}
+      </div>
+    </div>
+  `).join("");
+
+  // users
+  let usRes = await fetch(API+"/get-users-admin",{ headers:head });
+  let users = await usRes.json();
+  window._users = users;
+  renderUsers();
+}
+
+function renderUsers(){
+  const q = userSearch.value.toLowerCase();
+  const arr = (window._users||[]).filter(u=>{
+    return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+  });
+
+  adminUsers.innerHTML = `
+    <table class="table">
+      <tr><th>Name</th><th>Email</th><th>Balance</th><th>Ban</th></tr>
+      ${arr.map(u=>`
+        <tr>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.balance}</td>
+          <td>
+            <button class="btn-ghost tiny" onclick="toggleBan('${u.id}',${!u.banned})">
+              ${u.banned ? "Unban" : "Ban"}
+            </button>
+          </td>
+        </tr>
+      `).join("")}
+    </table>`;
+}
+
+/* ADMIN ACTIONS */
+async function approve(id){
+  await fetch(API+"/admin-approve-withdraw",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json","x-admin-key":ADMIN_KEY },
+    body:JSON.stringify({ withdraw_id:id, action:"approve" })
+  });
+  loadAdminData();
+}
+async function rejectReq(id){
+  await fetch(API+"/admin-approve-withdraw",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json","x-admin-key":ADMIN_KEY },
+    body:JSON.stringify({ withdraw_id:id, action:"reject" })
+  });
+  loadAdminData();
+}
+
+async function toggleBan(id,banState){
+  await fetch(API+"/admin-toggle-ban",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json","x-admin-key":ADMIN_KEY },
+    body:JSON.stringify({ user_id:id, ban:banState })
+  });
+  loadAdminData();
+}
+
+/* DEMO ADD BALANCE */
+async function demoAddBalance(){
+  const amt = prompt("Amount to add?");
+  if(!amt) return;
+
+  await fetch(API+"/demo-add-balance",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json", Authorization:"Bearer "+getToken() },
+    body:JSON.stringify({ amount:Number(amt) })
+  });
+
+  loadMe();
+}
+
+</script>
+</body>
+</html>
