@@ -1,30 +1,18 @@
 // netlify/functions/_db.js
-import fetch from "node-fetch";
+import pkg from "pg";
+const { Pool } = pkg;
 
-const NEON_URL = process.env.NEON_REST_URL;
-const NEON_KEY = process.env.NEON_SERVICE_KEY;
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
-// Run SQL through Neon REST API
 export async function db(query, params = []) {
-  const body = {
-    sql: query,
-    params: params
-  };
-
-  const res = await fetch(NEON_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${NEON_KEY}`
-    },
-    body: JSON.stringify(body)
-  });
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    throw new Error(json.message || "DB error");
+  const client = await pool.connect();
+  try {
+    const result = await client.query(query, params);
+    return { rows: result.rows };
+  } finally {
+    client.release();
   }
-
-  return json; // { rows: [...] }
 }
