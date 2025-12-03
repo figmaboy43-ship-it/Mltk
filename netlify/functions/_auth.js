@@ -1,9 +1,7 @@
 // netlify/functions/_auth.js
 import jwt from "jsonwebtoken";
+const SECRET = process.env.JWT_SECRET || "change_this_in_env";
 
-const SECRET = process.env.JWT_SECRET;
-
-// Create JWT for login
 export function signToken(user) {
   return jwt.sign(
     {
@@ -14,16 +12,16 @@ export function signToken(user) {
       balance: user.balance
     },
     SECRET,
-    { expiresIn: "7d" } // adjust as needed
+    { expiresIn: "7d" }
   );
 }
 
-// Verify JWT for protected endpoints
+// Accepts event.headers (plain object) or a header-like object
 export function verifyToken(headers) {
-  const auth = headers.get("authorization") || headers.get("Authorization");
+  if (!headers) return null;
+  const auth = headers.authorization || headers.Authorization || headers["Authorization"] || headers["authorization"];
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.replace("Bearer ", "");
-
   try {
     return jwt.verify(token, SECRET);
   } catch (err) {
